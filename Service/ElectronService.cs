@@ -10,7 +10,7 @@ namespace ElectronUpdateTest.Service
 {
     public class ElectronService
     {
-        public static string VERSION { get; } = "0.0.1";
+        public static string VERSION { get; } = "0.0.5";
         public string UpdateInfo { get; set; } = VERSION;
         public bool Resized { get; set; } = false;
 
@@ -48,10 +48,13 @@ namespace ElectronUpdateTest.Service
         {
             if (Resized == false) return false;
             bool success = false;
+
+            UpdateCheckResult result = new UpdateCheckResult();
             try
             {
-                UpdateCheckResult result = new UpdateCheckResult();
+                Electron.AutoUpdater.AutoDownload = false;
                 result = await Electron.AutoUpdater.CheckForUpdatesAsync();
+                
                 Console.WriteLine(result.UpdateInfo.Version);
                 Console.WriteLine(result.UpdateInfo.ReleaseDate);
             }
@@ -60,15 +63,31 @@ namespace ElectronUpdateTest.Service
                 return false;
             }
 
-          
+            if (VERSION == result.UpdateInfo.Version)
+                success = false;
+            else
+            {
+                UpdateInfo = String.Format("{0} ({1}): {2}", result.UpdateInfo.Version, result.UpdateInfo.ReleaseDate, result.UpdateInfo.ReleaseNotes.FirstOrDefault());
+                success = true;
+            }
+
             return success;
         }
 
         public async Task QuitAndInstall()
         {
-            UpdateCheckResult result = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
+            await Electron.AutoUpdater.DownloadUpdateAsync();
+
+            Electron.AutoUpdater.OnDownloadProgress += AutoUpdater_OnDownloadProgress;
 
             Electron.AutoUpdater.OnUpdateDownloaded += AutoUpdater_OnUpdateDownloaded;
+        }
+
+        private void AutoUpdater_OnDownloadProgress(ProgressInfo obj)
+        {
+            UpdateInfo = obj.Percent + " " + obj.BytesPerSecond + "/s" + " " + obj.Transferred + " " + obj.Progress + " " + obj.Total;
+            
+            Console.WriteLine(UpdateInfo);
         }
 
         private void AutoUpdater_OnUpdateDownloaded(UpdateInfo obj)

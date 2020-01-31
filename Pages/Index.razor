@@ -6,26 +6,47 @@
 
 Welcome to your new app.
 
-@_update.UpdateInfo
-
-
+<div>
+    @_update.UpdateInfo
+</div>
+<div>
+    <button type="button" class="btn btn-primary" @onclick="Check">Check for Updates</button>
+    @if (updateAvailable)
+    {
+        <button type="button" class="btn btn-primary" @onclick="Update">Updates and restart</button>
+    }
+</div>
 @code {
 
+
+    bool updateAvailable = false;
     protected override async Task OnInitializedAsync()
+    {
+        await _update.Resize();
+    }
+
+    async Task Check()
     {
         try
         {
-            await _update.Resize();
-            await _update.CheckForUpdate();
-        }
-        catch (Exception e)
+            updateAvailable = await _update.CheckForUpdate();
+        } catch (Exception e)
         {
             _update.UpdateInfo = e.Message;
         }
-        finally
-        {
-            await InvokeAsync(() => StateHasChanged());
-        }
+        await InvokeAsync(() => StateHasChanged());
     }
 
+    async Task Update()
+    {
+        _update.QuitAndInstall();
+
+        Task.Run(() => { 
+            while(true)
+            {
+                Task.Delay(250).GetAwaiter();
+                InvokeAsync(() => StateHasChanged()).GetAwaiter();
+            }
+        });
+    }
 }
