@@ -10,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ElectronUpdateTest.Data;
+using ElectronNET.API;
+using ElectronUpdateTest.Service;
 
 namespace ElectronUpdateTest
 {
@@ -29,6 +31,7 @@ namespace ElectronUpdateTest
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+            services.AddSingleton<ElectronService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -55,6 +58,7 @@ namespace ElectronUpdateTest
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
+            Task.Run(async () => await Electron.WindowManager.CreateWindowAsync());
         }
     }
 }

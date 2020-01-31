@@ -1,5 +1,31 @@
 ﻿@page "/"
+@using ElectronUpdateTest.Service
+@inject ElectronService  _update
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+@_update.UpdateInfo
+
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await _update.Resize();
+            await _update.CheckForUpdate();
+        }
+        catch (Exception e)
+        {
+            _update.UpdateInfo = e.Message;
+        }
+        finally
+        {
+            await InvokeAsync(() => StateHasChanged());
+        }
+    }
+
+}
