@@ -11,10 +11,7 @@ Welcome to your new app.
 </div>
 <div>
     <button type="button" class="btn btn-primary" @onclick="Check">Check for Updates</button>
-    @if (updateAvailable)
-    {
-        <button type="button" class="btn btn-primary" @onclick="Update">Updates and restart</button>
-    }
+    <button type="button" class="btn btn-primary" @onclick="Update">Updates and restart</button>
 </div>
 @code {
 
