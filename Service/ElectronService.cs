@@ -10,7 +10,7 @@ namespace ElectronUpdateTest.Service
 {
     public class ElectronService
     {
-        public static string VERSION { get; } = "0.0.5";
+        public static string VERSION { get; } = "0.0.6";
         public string UpdateInfo { get; set; } = VERSION;
         public bool Resized { get; set; } = false;
 
@@ -63,6 +63,7 @@ namespace ElectronUpdateTest.Service
                 return false;
             }
 
+            Console.WriteLine(VERSION + " <=> " + result.UpdateInfo.Version);
             if (VERSION == result.UpdateInfo.Version)
                 success = false;
             else
