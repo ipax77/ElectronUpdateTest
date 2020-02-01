@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using ElectronUpdateTest.Data;
 using ElectronNET.API;
 using ElectronUpdateTest.Service;
+using System.Globalization;
 
 namespace ElectronUpdateTest
 {
@@ -37,6 +38,9 @@ namespace ElectronUpdateTest
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

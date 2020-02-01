@@ -8,11 +8,28 @@ using ElectronNET.API.Entities;
 
 namespace ElectronUpdateTest.Service
 {
-    public class ElectronService
+    public class ElectronService : IDisposable
     {
         public static string VERSION { get; } = "0.0.6";
         public string UpdateInfo { get; set; } = VERSION;
         public bool Resized { get; set; } = false;
+        Task<UpdateCheckResult> resultTask;
+
+        public ElectronService()
+        {
+            Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
+            Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
+            Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
+            Electron.AutoUpdater.OnError += AutoUpdater_OnError;
+        }
+
+        public void Dispose()
+        {
+            Electron.AutoUpdater.OnUpdateAvailable -= AutoUpdater_OnUpdateAvailable;
+            Electron.AutoUpdater.OnUpdateNotAvailable -= AutoUpdater_OnUpdateNotAvailable;
+            Electron.AutoUpdater.OnCheckingForUpdate -= AutoUpdater_OnCheckingForUpdate;
+            Electron.AutoUpdater.OnError -= AutoUpdater_OnError;
+        }
 
         public async Task Resize()
         {
@@ -49,30 +66,78 @@ namespace ElectronUpdateTest.Service
             if (Resized == false) return false;
             bool success = false;
 
+            Console.WriteLine("Checking for update ...");
             UpdateCheckResult result = new UpdateCheckResult();
             try
             {
+                Electron.Notification.Show(new NotificationOptions("Hello", await Electron.App.GetVersionAsync()));
                 Electron.AutoUpdater.AutoDownload = false;
-                result = await Electron.AutoUpdater.CheckForUpdatesAsync();
-                
-                Console.WriteLine(result.UpdateInfo.Version);
-                Console.WriteLine(result.UpdateInfo.ReleaseDate);
+                resultTask =  Electron.AutoUpdater.CheckForUpdatesAsync();
+                //resultTask = Electron.AutoUpdater.CheckForUpdatesAsync();
+                //resultTask = Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
             }
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
                 return false;
             }
 
-            Console.WriteLine(VERSION + " <=> " + result.UpdateInfo.Version);
-            if (VERSION == result.UpdateInfo.Version)
-                success = false;
-            else
+            Console.WriteLine("Update Check running?!");
+            return success;
+        }
+
+        public async Task<bool> CheckForUpdate2()
+        {
+            if (Resized == false) return false;
+            bool success = false;
+
+            Console.WriteLine("Checking for update ...");
+            UpdateCheckResult result = new UpdateCheckResult();
+            try
             {
-                UpdateInfo = String.Format("{0} ({1}): {2}", result.UpdateInfo.Version, result.UpdateInfo.ReleaseDate, result.UpdateInfo.ReleaseNotes.FirstOrDefault());
-                success = true;
+                Electron.Notification.Show(new NotificationOptions("Hello", await Electron.App.GetVersionAsync()));
+                Electron.AutoUpdater.AutoDownload = false;
+                Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
+                Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
+                Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
+                Electron.AutoUpdater.OnError += AutoUpdater_OnError;
+
+                result = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
+                //resultTask = Electron.AutoUpdater.CheckForUpdatesAsync();
+                //resultTask = Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return false;
             }
 
+            Console.WriteLine("Update Check running?!");
+
+            Console.WriteLine(result.UpdateInfo.Version);
             return success;
+        }
+
+        private void AutoUpdater_OnError(string obj)
+        {
+            Console.WriteLine("Update error: " + obj);
+        }
+
+        private void AutoUpdater_OnCheckingForUpdate()
+        {
+            Console.WriteLine("Checking for new update.");
+        }
+
+        private void AutoUpdater_OnUpdateNotAvailable(UpdateInfo obj)
+        {
+            Console.WriteLine("No new version available: " + obj.Version);
+        }
+
+        private void AutoUpdater_OnUpdateAvailable(UpdateInfo obj)
+        {
+            Console.WriteLine("Version available: " + obj.Version);
+            var result = resultTask.Result;
+            UpdateInfo = String.Format("{0} ({1}): {2}", result.UpdateInfo.Version, result.UpdateInfo.ReleaseDate, result.UpdateInfo.ReleaseNotes.FirstOrDefault());
         }
 
         public async Task QuitAndInstall()
