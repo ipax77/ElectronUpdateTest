@@ -1,0 +1,76 @@
+﻿@page "/"
+@using Test123.Service
+@using ElectronNET.API
+@using ElectronNET.API.Entities
+@using Microsoft.Extensions.Logging
+@inject ElectronService  _update
+@inject ILogger<Index> logger
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<div>
+    @_update.UpdateInfo
+</div>
+<div>
+    <button type="button" class="btn btn-primary" @onclick="Check">Check for Updates</button>
+    <button type="button" class="btn btn-primary" @onclick="Check2">Check and Notify for Updates</button>
+    <button type="button" class="btn btn-primary" @onclick="Update">Updates and restart</button>
+</div>
+
+@code {
+
+
+    bool updateAvailable = false;
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    async Task Check()
+    {
+        logger.LogInformation("Checking for update");
+        try
+        {
+            updateAvailable = await _update.CheckForUpdate();
+        }
+        catch (Exception e)
+        {
+            _update.UpdateInfo = e.Message;
+            logger.LogError($"Checking for update failed: {e.Message}");
+        }
+
+        await InvokeAsync(() => StateHasChanged());
+    }
+
+    async Task Check2()
+    {
+        logger.LogInformation("Checking for update and notify");
+        try
+        {
+            updateAvailable = await _update.CheckForUpdate2();
+        }
+        catch (Exception e)
+        {
+            _update.UpdateInfo = e.Message;
+            logger.LogError($"Checking for update and notify failed: {e.Message}");
+        }
+
+        await InvokeAsync(() => StateHasChanged());
+    }
+
+    async Task Update()
+    {
+        logger.LogInformation("Quit and install");
+        await _update.QuitAndInstall();
+
+        Task.Run(() =>
+        {
+            while (true)
+            {
+                Task.Delay(250).GetAwaiter();
+                InvokeAsync(() => StateHasChanged()).GetAwaiter();
+            }
+        });
+    }
+}

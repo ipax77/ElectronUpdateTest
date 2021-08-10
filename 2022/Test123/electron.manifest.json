@@ -1,0 +1,42 @@
+{
+  "executable": "Test123",
+  "splashscreen": {
+    "imageFile": ""
+  },
+  "name": "Test123",
+  "singleInstance": false,
+  "environment": "Production",
+  "build": {
+    "appId": "com.Test123.app",
+    "productName": "Test123",
+    "copyright": "Copyright © 2022",
+    "buildVersion": "1.0.0",
+    "compression": "maximum",
+    "directories": {
+      "output": "../../../bin/Desktop"
+    },
+    "extraResources": [
+      {
+        "from": "./bin",
+        "to": "bin",
+        "filter": [ "**/*" ]
+      }
+    ],
+    "files": [
+      {
+        "from": "./ElectronHostHook/node_modules",
+        "to": "ElectronHostHook/node_modules",
+        "filter": [ "**/*" ]
+      },
+      "**/*"
+    ]
+  },
+  "user": "Ipax77",
+  "project": "ElectronUpdateTest",
+  "author": "Ipax77",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ipax77/electronupdatetest.git"
+  }
+}
