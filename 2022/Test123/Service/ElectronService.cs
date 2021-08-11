@@ -10,27 +10,73 @@ namespace Test123.Service
 {
     public class ElectronService : IDisposable
     {
-        public static string VERSION { get; } = "1.0.0";
+        public static string VERSION { get; } = "1.0.2";
         public string UpdateInfo { get; set; } = VERSION;
         public bool Resized { get; set; } = false;
         Task<UpdateCheckResult> resultTask;
 
         public ElectronService()
         {
-            Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
-            Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
-            Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
-            Electron.AutoUpdater.OnError += AutoUpdater_OnError;
+            //Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
+            //Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
+            //Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
+            //Electron.AutoUpdater.OnError += AutoUpdater_OnError;
         }
 
         public void Dispose()
         {
-            Electron.AutoUpdater.OnUpdateAvailable -= AutoUpdater_OnUpdateAvailable;
-            Electron.AutoUpdater.OnUpdateNotAvailable -= AutoUpdater_OnUpdateNotAvailable;
-            Electron.AutoUpdater.OnCheckingForUpdate -= AutoUpdater_OnCheckingForUpdate;
-            Electron.AutoUpdater.OnError -= AutoUpdater_OnError;
+            //Electron.AutoUpdater.OnUpdateAvailable -= AutoUpdater_OnUpdateAvailable;
+            //Electron.AutoUpdater.OnUpdateNotAvailable -= AutoUpdater_OnUpdateNotAvailable;
+            //Electron.AutoUpdater.OnCheckingForUpdate -= AutoUpdater_OnCheckingForUpdate;
+            //Electron.AutoUpdater.OnError -= AutoUpdater_OnError;
         }
 
+        
+        public void Update()
+        {
+            Electron.Notification.Show(new NotificationOptions("Hello", "World"));
+
+            if (HybridSupport.IsElectronActive)
+            {
+                Console.WriteLine("HybridSupport Electron is active.");
+                Electron.AutoUpdater.OnError += (message) => Electron.Dialog.ShowErrorBox("Error", message);
+                Electron.AutoUpdater.OnCheckingForUpdate += async () => await Electron.Dialog.ShowMessageBoxAsync("Checking for Update");
+                Electron.AutoUpdater.OnUpdateNotAvailable += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update not available");
+                Electron.AutoUpdater.OnUpdateAvailable += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update available" + info.Version);
+                Electron.AutoUpdater.OnDownloadProgress += (info) =>
+                {
+                    var message1 = "Download speed: " + info.BytesPerSecond + "\n<br/>";
+                    var message2 = "Downloaded " + info.Percent + "%" + "\n<br/>";
+                    var message3 = $"({info.Transferred}/{info.Total})" + "\n<br/>";
+                    var message4 = "Progress: " + info.Progress + "\n<br/>";
+                    var information = message1 + message2 + message3 + message4;
+
+                    var mainWindow = Electron.WindowManager.BrowserWindows.First();
+                    Electron.IpcMain.Send(mainWindow, "auto-update-reply", information);
+                };
+                Electron.AutoUpdater.OnUpdateDownloaded += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update complete!" + info.Version);
+
+                Electron.IpcMain.On("auto-update", async (args) =>
+                {
+                    Console.WriteLine("IpcMain On auto-update");
+                    // Electron.NET CLI Command for deploy:
+                    // electronize build /target win /electron-params --publish=always
+
+                    var currentVersion = await Electron.App.GetVersionAsync();
+                    var updateCheckResult = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
+                    var availableVersion = updateCheckResult.UpdateInfo.Version;
+                    string information = $"Current version: {currentVersion} - available version: {availableVersion}";
+
+                    var mainWindow = Electron.WindowManager.BrowserWindows.First();
+                    Electron.IpcMain.Send(mainWindow, "auto-update-reply", information);
+                    Electron.Notification.Show(new NotificationOptions("Update", information));
+                });
+            } else
+            {
+                Console.WriteLine("HybridSupport Electron is not active.");
+            }
+        }
+        
         public static async Task Resize()
         {
             bool isResized = false;

@@ -3,14 +3,26 @@
   "splashscreen": {
     "imageFile": ""
   },
-  "name": "Test123",
+  "name": "test123",
   "singleInstance": false,
   "environment": "Production",
   "build": {
+    "win": {
+      "publish": [ "github" ],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "./bin/wwwroot/images/icon-512x512.png"
+    },
     "appId": "com.Test123.app",
     "productName": "Test123",
     "copyright": "Copyright © 2022",
-    "buildVersion": "1.0.0",
+    "buildVersion": "1.0.2",
     "compression": "maximum",
     "directories": {
       "output": "../../../bin/Desktop"
