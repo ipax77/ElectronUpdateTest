@@ -10,29 +10,21 @@ namespace Test123.Service
 {
     public class ElectronService : IDisposable
     {
-        public static string VERSION { get; } = "1.0.2";
+        public static string VERSION { get; } = "1.0.1";
         public string UpdateInfo { get; set; } = VERSION;
         public bool Resized { get; set; } = false;
         Task<UpdateCheckResult> resultTask;
 
         public ElectronService()
         {
-            //Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
-            //Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
-            //Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
-            //Electron.AutoUpdater.OnError += AutoUpdater_OnError;
         }
 
         public void Dispose()
         {
-            //Electron.AutoUpdater.OnUpdateAvailable -= AutoUpdater_OnUpdateAvailable;
-            //Electron.AutoUpdater.OnUpdateNotAvailable -= AutoUpdater_OnUpdateNotAvailable;
-            //Electron.AutoUpdater.OnCheckingForUpdate -= AutoUpdater_OnCheckingForUpdate;
-            //Electron.AutoUpdater.OnError -= AutoUpdater_OnError;
         }
 
         
-        public void Update()
+        public async Task CheckUpdate()
         {
             Electron.Notification.Show(new NotificationOptions("Hello", "World"));
 
@@ -40,9 +32,7 @@ namespace Test123.Service
             {
                 Console.WriteLine("HybridSupport Electron is active.");
                 Electron.AutoUpdater.OnError += (message) => Electron.Dialog.ShowErrorBox("Error", message);
-                Electron.AutoUpdater.OnCheckingForUpdate += async () => await Electron.Dialog.ShowMessageBoxAsync("Checking for Update");
-                Electron.AutoUpdater.OnUpdateNotAvailable += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update not available");
-                Electron.AutoUpdater.OnUpdateAvailable += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update available" + info.Version);
+
                 Electron.AutoUpdater.OnDownloadProgress += (info) =>
                 {
                     var message1 = "Download speed: " + info.BytesPerSecond + "\n<br/>";
@@ -50,173 +40,45 @@ namespace Test123.Service
                     var message3 = $"({info.Transferred}/{info.Total})" + "\n<br/>";
                     var message4 = "Progress: " + info.Progress + "\n<br/>";
                     var information = message1 + message2 + message3 + message4;
-
-                    var mainWindow = Electron.WindowManager.BrowserWindows.First();
-                    Electron.IpcMain.Send(mainWindow, "auto-update-reply", information);
+                    Console.WriteLine(information);
                 };
-                Electron.AutoUpdater.OnUpdateDownloaded += async (info) => await Electron.Dialog.ShowMessageBoxAsync("Update complete!" + info.Version);
 
-                Electron.IpcMain.On("auto-update", async (args) =>
+                var currentVersion = new Version(await Electron.App.GetVersionAsync());
+
+                Electron.AutoUpdater.AutoDownload = false;
+                var updateResult = await Electron.AutoUpdater.CheckForUpdatesAsync();
+
+                // var updateCheckResult = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
+
+                var availableVersion = new Version(updateResult.UpdateInfo.Version);
+                string information = $"Current version: {currentVersion} - available version: {availableVersion}";
+                Console.WriteLine(information);
+                Electron.Notification.Show(new NotificationOptions("Update", information));
+
+                if (availableVersion > currentVersion)
                 {
-                    Console.WriteLine("IpcMain On auto-update");
-                    // Electron.NET CLI Command for deploy:
-                    // electronize build /target win /electron-params --publish=always
-
-                    var currentVersion = await Electron.App.GetVersionAsync();
-                    var updateCheckResult = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
-                    var availableVersion = updateCheckResult.UpdateInfo.Version;
-                    string information = $"Current version: {currentVersion} - available version: {availableVersion}";
-
-                    var mainWindow = Electron.WindowManager.BrowserWindows.First();
-                    Electron.IpcMain.Send(mainWindow, "auto-update-reply", information);
-                    Electron.Notification.Show(new NotificationOptions("Update", information));
-                });
+                    await Update();
+                }
+                
             } else
             {
                 Console.WriteLine("HybridSupport Electron is not active.");
             }
         }
-        
-        public static async Task Resize()
+
+        public async Task Update()
         {
-            bool isResized = false;
-            BrowserWindow browserWindow = null;
-            int failsafe = 32;
-            do
+            Console.WriteLine("Restart and Install new update");
+
+            Electron.AutoUpdater.OnUpdateDownloaded += (info) =>
             {
-                await Task.Delay(500);
-                browserWindow = Electron.WindowManager.BrowserWindows.FirstOrDefault();
-                if (browserWindow != null)
-                {
-                    try
-                    {
-                        lock (browserWindow)
-                        {
-                            // browserWindow.SetPosition(0, 0);
-                            // browserWindow.SetSize(1280, 1024);
-                            browserWindow.SetMenuBarVisibility(false);
-                            // browserWindow.SetAlwaysOnTop(true);
-                            // browserWindow.SetFullScreen(true);
-                            // browserWindow.SetKiosk(true);
-                        }
-                        isResized = true;
-                    }
-                    catch
-                    {
+                Electron.AutoUpdater.QuitAndInstall(true, true);
+            };
 
-                    }
-                }
-                Console.WriteLine(failsafe);
-                failsafe--;
-            } while (isResized == false && failsafe > 0);
+            var result = await Electron.AutoUpdater.DownloadUpdateAsync();
+
+            Console.WriteLine(result);
         }
-
-        public async Task<bool> CheckForUpdate()
-        {
-            if (Resized == false) return false;
-            bool success = false;
-
-            Console.WriteLine("Checking for update ...");
-            UpdateCheckResult result = new UpdateCheckResult();
-            try
-            {
-                Electron.Notification.Show(new NotificationOptions("Hello", await Electron.App.GetVersionAsync()));
-                Electron.AutoUpdater.AutoDownload = false;
-                resultTask =  Electron.AutoUpdater.CheckForUpdatesAsync();
-                //resultTask = Electron.AutoUpdater.CheckForUpdatesAsync();
-                //resultTask = Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
-            }
-
-            Console.WriteLine("Update Check running?!");
-            return success;
-        }
-
-        public async Task<bool> CheckForUpdate2()
-        {
-            if (Resized == false) return false;
-            bool success = false;
-
-            Console.WriteLine("Checking for update ...");
-            UpdateCheckResult result = new UpdateCheckResult();
-            try
-            {
-                Electron.Notification.Show(new NotificationOptions("Hello", await Electron.App.GetVersionAsync()));
-                Electron.AutoUpdater.AutoDownload = false;
-                Electron.AutoUpdater.OnUpdateAvailable += AutoUpdater_OnUpdateAvailable;
-                Electron.AutoUpdater.OnUpdateNotAvailable += AutoUpdater_OnUpdateNotAvailable;
-                Electron.AutoUpdater.OnCheckingForUpdate += AutoUpdater_OnCheckingForUpdate;
-                Electron.AutoUpdater.OnError += AutoUpdater_OnError;
-
-                result = await Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
-                //resultTask = Electron.AutoUpdater.CheckForUpdatesAsync();
-                //resultTask = Electron.AutoUpdater.CheckForUpdatesAndNotifyAsync();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
-            }
-
-            Console.WriteLine("Update Check running?!");
-
-            Console.WriteLine(result.UpdateInfo.Version);
-            return success;
-        }
-
-        private void AutoUpdater_OnError(string obj)
-        {
-            Console.WriteLine("Update error: " + obj);
-        }
-
-        private void AutoUpdater_OnCheckingForUpdate()
-        {
-            Console.WriteLine("Checking for new update.");
-        }
-
-        private void AutoUpdater_OnUpdateNotAvailable(UpdateInfo obj)
-        {
-            Console.WriteLine("No new version available: " + obj.Version);
-        }
-
-        private void AutoUpdater_OnUpdateAvailable(UpdateInfo obj)
-        {
-            Console.WriteLine("Version available: " + obj.Version);
-            var result = resultTask.Result;
-            UpdateInfo = String.Format("{0} ({1}): {2}", result.UpdateInfo.Version, result.UpdateInfo.ReleaseDate, result.UpdateInfo.ReleaseNotes.FirstOrDefault());
-        }
-
-        public async Task QuitAndInstall()
-        {
-            await Electron.AutoUpdater.DownloadUpdateAsync();
-
-            Electron.AutoUpdater.OnDownloadProgress += AutoUpdater_OnDownloadProgress;
-
-            Electron.AutoUpdater.OnUpdateDownloaded += AutoUpdater_OnUpdateDownloaded;
-        }
-
-        private void AutoUpdater_OnDownloadProgress(ProgressInfo obj)
-        {
-            UpdateInfo = obj.Percent + " " + obj.BytesPerSecond + "/s" + " " + obj.Transferred + " " + obj.Progress + " " + obj.Total;
-            
-            Console.WriteLine(UpdateInfo);
-        }
-
-        private void AutoUpdater_OnUpdateDownloaded(UpdateInfo obj)
-        {
-            try
-            {
-                Electron.AutoUpdater.QuitAndInstall(false, true);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                Electron.AutoUpdater.OnUpdateDownloaded -= AutoUpdater_OnUpdateDownloaded;
-            }
-        }
+       
     }
 }
