@@ -1,31 +1,19 @@
 {
-  "executable": "ElectronUpdateTest",
-  "singleInstance": false,
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ipax77/electronupdatetest.git"
+  "executable": "Test123",
+  "splashscreen": {
+    "imageFile": ""
   },
+  "name": "Test123",
+  "singleInstance": false,
+  "environment": "Production",
   "build": {
-    "win": {
-      "publish": [ "github" ],
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "wwwroot/images/icon-512x512.png"
-    },
-    "appId": "com.github.ipax77.electronupdatetest",
-    "productName": "ElectronUpdateTest",
-    "copyright": "Copyright © 2019 Philipp Hetzner",
-    "buildVersion": "0.0.1",
+    "appId": "com.Test123.app",
+    "productName": "Test123",
+    "copyright": "Copyright © 2020",
+    "buildVersion": "1.0.2",
     "compression": "maximum",
     "directories": {
-      "output": "../../bin/Desktop",
-      "buildResources": "../../../build"
+      "output": "../../../bin/Desktop"
     },
     "extraResources": [
       {
@@ -43,8 +31,12 @@
       "**/*"
     ]
   },
-  "user": "ipax77",
+  "user": "Ipax77",
   "project": "ElectronUpdateTest",
-  "author": "Philipp Hetzner",
-  "license": "GPL3"
+  "author": "Ipax77",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ipax77/electronupdatetest.git"
+  }
 }

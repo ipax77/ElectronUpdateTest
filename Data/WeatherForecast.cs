@@ -1,6 +1,6 @@
 using System;
 
-namespace ElectronUpdateTest.Data
+namespace Test123.Data
 {
     public class WeatherForecast
     {

@@ -9,12 +9,12 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ElectronUpdateTest.Data;
+using Test123.Data;
 using ElectronNET.API;
-using ElectronUpdateTest.Service;
-using System.Globalization;
+using Test123.Service;
+using ElectronNET.API.Entities;
 
-namespace ElectronUpdateTest
+namespace Test123
 {
     public class Startup
     {
@@ -38,9 +38,6 @@ namespace ElectronUpdateTest
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
-
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -62,7 +59,25 @@ namespace ElectronUpdateTest
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host");
             });
-            Task.Run(async () => await Electron.WindowManager.CreateWindowAsync());
+            var task = Task.Run(async () => await Electron.WindowManager.CreateWindowAsync(
+                new BrowserWindowOptions() {
+                    Resizable = true,
+                    Closable = true,
+                    Minimizable = true,
+                    Movable = true,
+                    AlwaysOnTop = false,
+                    AutoHideMenuBar = true,
+                    Kiosk = false,
+                    Width = 1920,
+                    Height = 1080,
+                    X = 0,
+                    Y = 0
+                }
+            ));
+            task.ContinueWith(async (antecedent) =>
+            {
+                // await ElectronService.Resize();
+            });
         }
     }
 }

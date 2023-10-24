@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ElectronNET.API;
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ElectronNET.API;
 
-namespace ElectronUpdateTest
+namespace Test123
 {
     public class Program
     {
@@ -23,9 +21,8 @@ namespace ElectronUpdateTest
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder
-                    .UseStartup<Startup>()
-                    .UseElectron(args);
+                    webBuilder.UseElectron(args);
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }
